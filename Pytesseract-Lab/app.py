@@ -3,6 +3,28 @@ from flask import session as login_session
 from PIL import Image
 import pytesseract
 import requests
+import json
+
+pytesseract.pytesseract.tesseract_cmd = "C:\\Program Files\\Tesseract-OCR\\tesseract.exe"
+
+url = "https://deep-translate1.p.rapidapi.com/language/translate/v2"
+
+headers = {
+	"X-RapidAPI-Key": "e8e05e43e3msh9a82649a3281818p1f74e6jsnc48e32fbc2b0",
+	"X-RapidAPI-Host": "deep-translate1.p.rapidapi.com"
+}
+
+
+def translate(language, text):
+    payload = {
+	"q": text,
+	"target": language
+    }
+    
+    response = requests.request("POST", url, json=payload, headers=headers)
+
+    print(type(json.loads(response.text)))
+    return json.loads(response.text)['data']['translations']['translatedText']
 
 
 app = Flask(  # Create a flask app
@@ -21,6 +43,12 @@ def form():
 
 @app.route('/translated', methods=['GET', 'POST'])
 def translated():
+    if request.method == 'POST':
+        image = Image.open(request.files['pic'])
+        text = pytesseract.image_to_string(image)
+        translated = translate(request.form['lang'], text)
+        return render_template('translated.html', text=translated)
+
     return render_template('translated.html')
 
 
